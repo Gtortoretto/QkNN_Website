@@ -15,13 +15,13 @@ CORS(app) # Enable Cross-Origin Resource Sharing
 # NOTE: The paths are now updated to match your folder structure.
 print("Loading models and data...")
 try:
-    with open("Data/Pickles/web_qknn_hybrid_scaler_2500.pkl", "rb") as f:
+    with open("Data/Pickles/web_qknn_hybrid_scaler_250.pkl", "rb") as f:
         scaler = pickle.load(f)
-    with open("Data/Pickles/web_qknn_hybrid_pca_2500.pkl", "rb") as f:
+    with open("Data/Pickles/web_qknn_hybrid_pca_250.pkl", "rb") as f:
         pca = pickle.load(f)
-    with open("Data/Pickles/web_qknn_hybrid_xtrain_pca_2500.pkl", "rb") as f:
+    with open("Data/Pickles/web_qknn_hybrid_xtrain_pca_250.pkl", "rb") as f:
         x_train_pca = pickle.load(f)
-    with open("Data/Pickles/web_qknn_hybrid_ytrain_2500.pkl", "rb") as f:
+    with open("Data/Pickles/web_qknn_hybrid_ytrain_250.pkl", "rb") as f:
         y_train_new = pickle.load(f)
     print("Models and data loaded successfully!")
 except FileNotFoundError as e:
