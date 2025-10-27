@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum k-NN MNIST Classifier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Quantum k-NN MNIST Classifier</h1>
+    <p>Draw a single digit (0-9) in the box below.</p>
+    
+    <div class="main-container">
+        <canvas id="drawing-canvas" width="280" height="280"></canvas>
+        <div class="controls">
+            <button id="classify-btn">Classify</button>
+            <button id="clear-btn">Clear</button>
+            <div class="result-box">
+                <h2>Prediction: <span id="result">-</span></h2>
+                <div id="loader" class="loader" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
