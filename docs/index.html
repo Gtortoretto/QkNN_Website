@@ -3,22 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum k-NN MNIST Classifier</title>
+    <title>QkNN</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Quantum k-NN MNIST Classifier</h1>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="https://github.com/Gtortoretto" target="_blank" class="nav-logo">
+                <img src="github.png" alt="GitHub Logo">
+            </a>
+            <label class="switch">
+                <input type="checkbox" id="darkModeToggle">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        
+        <ul class="nav-links">
+            <li><a href="http://example.com/">Gabriel</a></li>
+            <li class="separator">|</li>
+            <li><a href="https://link.springer.com/article/10.1007/s11128-018-2004-9" target="_blank">Source</a></li>
+            <li class="separator">|</li>
+            <li><a href="http://sampa-usp.github.io/" target="_blank">Sampa</a></li>
+        </ul>
+        
+        <div class="nav-right">
+            <a href="https://github.com/Sampa-USP" target="_blank" class="nav-logo">
+                <img src="sampa.png" alt="Sampa Group Logo">
+            </a>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </nav>
+
+    <h1>QkNN MNIST Classifier</h1>
     <p>Draw a single digit (0-9) in the box below.</p>
     
     <div class="main-container">
-        <canvas id="drawing-canvas" width="280" height="280"></canvas>
+        <div class="canvas-wrapper">
+            <canvas id="drawing-canvas" width="280" height="280"></canvas>
+            <div class="pencil-cog" id="pencilCog">✏️</div>
+            <!-- Pencil Configuration Menu -->
+            <div class="pencil-menu" id="pencilMenu">
+                <h3>Drawing Settings</h3>
+                
+                <div class="settings-section">
+                    <h4>Pen Style</h4>
+                    <div class="setting-option">
+                        <label for="fountainPenToggle">Fountain Pen</label>
+                        <label class="switch">
+                            <input type="checkbox" id="fountainPenToggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4>Stroke Width</h4>
+                    <div class="setting-option">
+                        <label for="strokeWidth">Width</label>
+                        <span id="strokeWidthValue">20</span>
+                    </div>
+                    <div class="setting-option slider-option">
+                        <input type="range" id="strokeWidth" min="5" max="50" step="1" value="20">
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="controls">
             <button id="classify-btn">Classify</button>
             <button id="clear-btn">Clear</button>
             <div class="result-box">
-                <h2>Prediction: <span id="result">-</span></h2>
-                <div id="loader" class="loader" style="display:none;"></div>
+                <h2>Prediction: <span id="loader" class="loader" style="display:none;"></span></h2>
+                <!-- Keep results container inside the result box and always reserve space to avoid layout shift -->
+                <div id="result-display"></div>
             </div>
+        </div>
+    </div>
+
+    <div id="debug-area" style="display: none; margin-top: 30px; text-align: center;">
+        <h3>Debug View</h3>
+        <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
+            <div>
+                <p style="font-weight: bold; margin-bottom: 10px;">Your Processed Drawing</p>
+                <canvas id="debug-canvas-user" width="140" height="140" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
+            </div>
+            <div>
+                <p style="font-weight: bold; margin-bottom: 10px;">MNIST Sample (Label: <span id="mnist-label">-</span>)</p>
+                <canvas id="debug-canvas-mnist" width="140" height="140" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
+                <div style="margin-top: 15px;">
+                    <label for="mnist-digit-filter" style="margin-right: 8px; font-size: 14px;">Filter by digit (0-9):</label>
+                    <input type="number" id="mnist-digit-filter" min="0" max="9" placeholder="Any" style="width: 60px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
+                </div>
+                <button id="compare-mnist-btn" style="margin-top: 10px; padding: 8px 16px; background-color: #1f77b4; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">Compare with MNIST</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-container" id="historyContainer">
+        <div class="history-summary">
+            <h3>History</h3>
+            <div class="accuracy-tally" id="accuracyTally">
+            </div>
+            <button id="clearHistoryBtn" class="clear-btn-small">Clear All</button>
+        </div>
+        <div class="history-table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Drawing</th>
+                        <th>Prediction</th>
+                        <th>Correct Label</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="settings-cog" id="settingsCog">
+        <div class="circle">
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+            <div class="cogwrap"><div class="cog"></div></div>
+        </div>
+        </div>
+
+    <div class="settings-menu" id="settingsMenu">
+        <h3>Settings</h3>
+        
+        <div class="settings-section">
+            <h4>Backend Server</h4>
+            <div class="setting-option">
+                <label>
+                    <input type="radio" name="backend" value="pythonanywhere" checked> PythonAnywhere
+                </label>
+                <span class="status-dot green" id="paStatus" title="Status: Unknown"></span>
+            </div>
+            <div class="setting-option">
+                <label>
+                    <input type="radio" name="backend" value="localhost"> Localhost
+                </label>
+                <span class="status-dot red" id="localStatus" title="Status: Offline"></span>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h4>Algorithm</h4>
+            <div class="setting-option">
+                <label><input type="checkbox" name="algorithm" value="qknn_sim"> QkNN (Simulated)</label>
+                <button id="qknnSettingsCog" class="settings-cog-small">⚙️</button>
+            </div>
+            <div class="setting-option disabled">
+                <label><input type="checkbox" name="algorithm" value="qknn_real" disabled> QkNN (Real Hardware)</label>
+                <span>(Todo)</span>
+            </div>
+            <div class="setting-option">
+                <label><input type="checkbox" name="algorithm" value="knn_classical" checked> kNN (Classical)</label>
+                <button id="knnSettingsCog" class="settings-cog-small">⚙️</button>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h4>Misc</h4>
+            <div class="setting-option">
+                <label for="showTimeToggle">Show Time to Classify</label>
+                <label class="switch">
+                    <input type="checkbox" id="showTimeToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <label for="historyToggle">Enable History Log</label>
+                <label class="switch">
+                    <input type="checkbox" id="historyToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting-option">
+                <label for="preprocessToggle">Image Preprocessing</label>
+                <div>
+                    <button id="preprocessSettingsCog" class="settings-cog-small">⚙️</button>
+                    <label class="switch">
+                        <input type="checkbox" id="preprocessToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-option">
+                <label for="debugViewToggle">Debug View</label>
+                <label class="switch">
+                    <input type="checkbox" id="debugViewToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Moved outside settings-menu to prevent clipping and allow free overflow -->
+    <div class="preprocess-submenu" id="preprocessSubMenu">
+        <div class="setting-option">
+            <label for="comToggle">Center of Mass</label>
+            <label class="switch">
+                <input type="checkbox" id="comToggle" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="setting-option">
+            <label for="blurToggle">Gaussian Blur</label>
+            <label class="switch">
+                <input type="checkbox" id="blurToggle" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="setting-option slider-option">
+            <label for="blurSlider" class="visually-hidden">Blur Amount</label>
+            <input type="range" id="blurSlider" min="0" max="2" step="0.1" value="0.8">
+            <span id="blurValue">0.8</span>
+        </div>
+        <div class="setting-option">
+            <label for="thinningToggle">Morphological Thinning</label>
+            <label class="switch">
+                <input type="checkbox" id="thinningToggle" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="setting-option slider-option">
+            <label for="thinningSlider" class="visually-hidden">Thinning Intensity</label>
+            <input type="range" id="thinningSlider" min="0" max="2" step="0.1" value="0.5">
+            <span id="thinningValue">0.5</span>
+        </div>
+    </div>
+
+    <!-- QkNN Configuration Submenu -->
+    <div class="preprocess-submenu" id="qknnSubMenu">
+        <h4 style="margin-top: 0; text-align: center;">QkNN Settings</h4>
+        
+        <div class="setting-option">
+            <label for="qknnTrainingSize">Training Size</label>
+            <span id="qknnTrainingSizeValue" class="editable-value" contenteditable="false">2500</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="qknnTrainingSize" min="250" max="60000" step="250" value="2500">
+        </div>
+        
+        <div class="setting-option">
+            <label for="qknnPcaComponents">PCA Components</label>
+            <span id="qknnPcaComponentsValue">16</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="qknnPcaComponents" min="2" max="7" step="1" value="4">
+        </div>
+        
+        <div class="setting-option">
+            <label for="qknnK">K Neighbors</label>
+            <span id="qknnKValue">5</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="qknnK" min="1" max="10" step="1" value="5">
+        </div>
+        
+        <div class="setting-option">
+            <label for="qknnShots">Shots</label>
+            <span id="qknnShotsValue">1024</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="qknnShots" min="7" max="12" step="1" value="10">
+        </div>
+    </div>
+
+    <!-- kNN Configuration Submenu -->
+    <div class="preprocess-submenu" id="knnSubMenu">
+        <h4 style="margin-top: 0; text-align: center;">kNN Settings</h4>
+        
+        <div class="setting-option">
+            <label for="knnTrainingSize">Training Size</label>
+            <span id="knnTrainingSizeValue" class="editable-value" contenteditable="false">25000</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="knnTrainingSize" min="250" max="60000" step="250" value="25000">
+        </div>
+        
+        <div class="setting-option">
+            <label for="knnPcaComponents">PCA Components</label>
+            <span id="knnPcaComponentsValue">200</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="knnPcaComponents" min="5" max="200" step="5" value="200">
+        </div>
+        
+        <div class="setting-option">
+            <label for="knnK">K Neighbors</label>
+            <span id="knnKValue">5</span>
+        </div>
+        <div class="setting-option slider-option">
+            <input type="range" id="knnK" min="1" max="10" step="1" value="5">
         </div>
     </div>
     
