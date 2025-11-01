@@ -16,6 +16,10 @@ from functools import lru_cache, wraps
 from collections import Counter  
 from qiskit import QuantumCircuit 
 from qiskit_aer import AerSimulator
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 # --- 1. SECURITY & SETUP ---
