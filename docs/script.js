@@ -2,10 +2,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. Constants and Global State ---
     const BACKEND_URLS = {
-        pythonanywhere: 'https://gtortoretto.pythonanywhere.com/classify',
-        localhost: 'http://127.0.0.1:5000/classify'
+        huggingface: 'https://gtortoretto-qknn-backend.hf.space/classify',
+        localhost: 'http://127.0.0.1:5000/classify',
+        pythonanywhere: 'https://gtortoretto.pythonanywhere.com/classify'
     };
-    let currentBackendUrl = BACKEND_URLS.pythonanywhere; // Default URL
+    let currentBackendUrl = BACKEND_URLS.huggingface; // Default URL
     const MOBILE_BREAKPOINT = 820;
     let drawing = false;
     let historyLog = []; 
@@ -25,15 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let algorithmConfigs = {
         'qknn_sim': {
-            training_size: 2500,
+            training_size: 250,
             pca_components: 16,
             k: 5,
             shots: 1024,
             method: 'default'
         },
         'knn_classical': {
-            training_size: 25000,
-            pca_components: 200,
+            training_size: 250,
+            pca_components: 16,
             k: 5,
             method: 'default'
         }
@@ -132,10 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadSettings() {
-        const savedBackend = localStorage.getItem('settings_backend') || 'pythonanywhere';
+        const savedBackend = localStorage.getItem('settings_backend') || 'huggingface';
         document.querySelector(`input[name="backend"][value="${savedBackend}"]`).checked = true;
 
-        const savedAlgorithm = localStorage.getItem('settings_algorithm') || 'qknn_sim';
+        const savedAlgorithm = localStorage.getItem('settings_algorithm') || 'knn_classical';
         document.querySelector(`input[name="algorithm"][value="${savedAlgorithm}"]`).checked = true;
         
         const savedShowTime = localStorage.getItem('settings_showTime') === 'true';
@@ -508,10 +509,12 @@ document.addEventListener('DOMContentLoaded', () => {
             algorithmConfigs.knn_classical.training_size = 250;
             algorithmConfigs.knn_classical.pca_components = 16;
         }
+        
+        updateClassifyButtonState();
     }
 
     function getSelectedAlgorithm() {
-        return document.querySelector('input[name="algorithm"]:checked')?.value || 'qknn_sim';
+        return document.querySelector('input[name="algorithm"]:checked')?.value || 'knn_classical';
     }
 
     async function ping(url, ms = 2000) {
@@ -529,15 +532,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateBackendStatusDots() {
-        // --- PythonAnywhere Check ---
-        const paRadio = document.querySelector('input[name="backend"][value="pythonanywhere"]');
-        const paDot = document.getElementById('paStatus');
-        if (paRadio && paDot) {
-            const isOnline = await ping(BACKEND_URLS.pythonanywhere);
-            paDot.classList.toggle('green', isOnline);
-            paDot.classList.toggle('red', !isOnline);
-            paDot.title = isOnline ? 'Online' : 'Offline';
-            paRadio.disabled = !isOnline; // Disable radio button if offline
+        // --- Hugging Face Check ---
+        const hfRadio = document.querySelector('input[name="backend"][value="huggingface"]');
+        const hfDot = document.getElementById('hfStatus');
+        if (hfRadio && hfDot) {
+            const isOnline = await ping(BACKEND_URLS.huggingface);
+            hfDot.classList.remove('green', 'red', 'orange');
+            hfDot.classList.add(isOnline ? 'green' : 'red');
+            hfDot.title = isOnline ? 'Online' : 'Offline';
+            hfRadio.disabled = !isOnline;
         }
 
         // --- Localhost Check ---
@@ -545,10 +548,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const localDot = document.getElementById('localStatus');
         if (localRadio && localDot) {
             const isOnline = await ping(BACKEND_URLS.localhost);
-            localDot.classList.toggle('green', isOnline);
-            localDot.classList.toggle('red', !isOnline);
+            localDot.classList.remove('green', 'red', 'orange');
+            localDot.classList.add(isOnline ? 'green' : 'red');
             localDot.title = isOnline ? 'Online' : 'Offline';
-            localRadio.disabled = !isOnline; // Disable radio button if offline
+            localRadio.disabled = !isOnline;
+        }
+
+        // --- PythonAnywhere Check ---
+        const paRadio = document.querySelector('input[name="backend"][value="pythonanywhere"]');
+        const paDot = document.getElementById('paStatus');
+        if (paRadio && paDot) {
+            const isOnline = await ping(BACKEND_URLS.pythonanywhere);
+            paDot.classList.remove('green', 'red', 'orange');
+            paDot.classList.add(isOnline ? 'green' : 'red');
+            paDot.title = isOnline ? 'Online' : 'Offline';
+            paRadio.disabled = !isOnline;
         }
         
         // After updating statuses, check if the main button should be disabled
@@ -917,7 +931,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateKnnConfig() {
         const trainingSize = parseInt(knnTrainingSize.value);
-        const pcaComponents = parseInt(knnPcaComponents.value);
+        const pcaSliderValue = parseInt(knnPcaComponents.value);
+        const pcaComponents = Math.pow(2, pcaSliderValue); // Convert slider to power of 2
         const k = parseInt(knnK.value);
 
         knnTrainingSizeValue.textContent = trainingSize;

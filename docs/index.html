@@ -144,15 +144,21 @@
             <h4>Backend Server</h4>
             <div class="setting-option">
                 <label>
-                    <input type="radio" name="backend" value="pythonanywhere" checked> PythonAnywhere
+                    <input type="radio" name="backend" value="huggingface" checked> Hugging Face
                 </label>
-                <span class="status-dot green" id="paStatus" title="Status: Unknown"></span>
+                <span class="status-dot red" id="hfStatus" title="Status: Unknown"></span>
             </div>
             <div class="setting-option">
                 <label>
                     <input type="radio" name="backend" value="localhost"> Localhost
                 </label>
                 <span class="status-dot red" id="localStatus" title="Status: Offline"></span>
+            </div>
+            <div class="setting-option">
+                <label>
+                    <input type="radio" name="backend" value="pythonanywhere"> PythonAnywhere
+                </label>
+                <span class="status-dot red" id="paStatus" title="Status: Unknown"></span>
             </div>
         </div>
 
@@ -249,10 +255,10 @@
         
         <div class="setting-option">
             <label for="qknnTrainingSize">Training Size</label>
-            <span id="qknnTrainingSizeValue" class="editable-value" contenteditable="false">2500</span>
+            <span id="qknnTrainingSizeValue" class="editable-value" contenteditable="false">250</span>
         </div>
         <div class="setting-option slider-option">
-            <input type="range" id="qknnTrainingSize" min="250" max="60000" step="250" value="2500">
+            <input type="range" id="qknnTrainingSize" min="250" max="60000" step="250" value="250">
         </div>
         
         <div class="setting-option">
@@ -286,18 +292,18 @@
         
         <div class="setting-option">
             <label for="knnTrainingSize">Training Size</label>
-            <span id="knnTrainingSizeValue" class="editable-value" contenteditable="false">25000</span>
+            <span id="knnTrainingSizeValue" class="editable-value" contenteditable="false">250</span>
         </div>
         <div class="setting-option slider-option">
-            <input type="range" id="knnTrainingSize" min="250" max="60000" step="250" value="25000">
+            <input type="range" id="knnTrainingSize" min="250" max="60000" step="250" value="250">
         </div>
         
         <div class="setting-option">
             <label for="knnPcaComponents">PCA Components</label>
-            <span id="knnPcaComponentsValue">200</span>
+            <span id="knnPcaComponentsValue">16</span>
         </div>
         <div class="setting-option slider-option">
-            <input type="range" id="knnPcaComponents" min="5" max="200" step="5" value="200">
+            <input type="range" id="knnPcaComponents" min="2" max="9" step="1" value="4">
         </div>
         
         <div class="setting-option">
