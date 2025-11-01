@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastX = 0;
     let lastY = 0;
     let lastTime = 0;
-    let lastWidth = 20; // Track last width for smooth transitions
-    let velocityHistory = []; // Keep a history of recent velocities for smoothing
+    let lastWidth = 20;
+    let velocityHistory = [];
 
     let algorithmConfigs = {
         'qknn_sim': {
@@ -158,18 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHistoryTable() {
-        // 1. Clear any existing content to prevent duplicates
         historyTableHead.innerHTML = '';
         historyTableBody.innerHTML = '';
 
-        // 2. Discover all unique algorithm names
         const allAlgorithmKeys = new Set();
         historyLog.forEach(entry => {
             Object.keys(entry.predictions).forEach(key => allAlgorithmKeys.add(key));
         });
         const algorithmColumns = Array.from(allAlgorithmKeys);
 
-        // 3. Create the dynamic table headers
         let headersHTML = `
             <th>Drawing</th>
             <th>Correct Label</th>
@@ -178,10 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         algorithmColumns.forEach(key => {
             headersHTML += `<th>${key.replace(/_/g, ' ')}</th>`;
         });
-        headersHTML += `<th></th>`; // <-- ADD THIS LINE for the delete button column
+        headersHTML += `<th></th>`;
         historyTableHead.innerHTML = headersHTML;
 
-        // 4. Create and append a row for each entry
         historyLog.forEach(entry => {
             const row = document.createElement('tr');
             
@@ -196,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 rowHTML += `<td>${prediction}</td>`;
             });
 
-            // --- ADD THIS CELL FOR THE DELETE BUTTON ---
             rowHTML += `<td><button class="delete-row-btn" data-id="${entry.id}">&times;</button></td>`;
 
             row.innerHTML = rowHTML;
@@ -207,20 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateAccuracyTally() {
-        const scores = {}; // e.g., { knn_classical: { correct: 5, total: 6 } }
+        const scores = {};
 
-        // 1. Tally up the correct and total predictions for each algorithm
         historyLog.forEach(entry => {
-            // Only count entries where the user has provided a correct label
             if (entry.correctLabel !== null && entry.correctLabel !== '') {
                 Object.keys(entry.predictions).forEach(algoKey => {
-                    // Initialize the score object for a new algorithm if it doesn't exist
                     if (!scores[algoKey]) {
                         scores[algoKey] = { correct: 0, total: 0 };
                     }
                     
                     scores[algoKey].total++;
-                    // Check if the prediction matches the user-provided label (use == for type coercion)
                     if (entry.predictions[algoKey] == entry.correctLabel) {
                         scores[algoKey].correct++;
                     }
@@ -228,24 +219,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Build the HTML string to display the scores
         let tallyHTML = '';
-        const sortedKeys = Object.keys(scores).sort(); // Sort keys for consistent order
+        const sortedKeys = Object.keys(scores).sort();
 
         sortedKeys.forEach((key, index) => {
             const score = scores[key];
             const accuracy = (score.total > 0) ? (score.correct / score.total) * 100 : 0;
             
-            // Add a separator before all items except the first one
             if (index > 0) {
                 tallyHTML += `<span class="separator">&nbsp;|&nbsp;</span>`;
             }
             
-            const displayName = key.replace(/_/g, ' '); // Make the name readable
+            const displayName = key.replace(/_/g, ' ');
             tallyHTML += `<span>${displayName}: <strong>${accuracy.toFixed(0)}%</strong> (${score.correct}/${score.total})</span>`;
         });
         
-        // 3. Update the DOM
         accuracyTally.innerHTML = tallyHTML || 'Enter correct labels to see accuracy.';
     }
 
@@ -273,33 +261,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return drawingConfig.strokeWidth;
         }
         
-        // Calculate velocity (distance / time)
         const distance = Math.sqrt(dx * dx + dy * dy);
         const velocity = dt > 0 ? distance / dt : 0;
         
-        // Add to velocity history for smoothing (keep last 3 samples)
         velocityHistory.push(velocity);
         if (velocityHistory.length > 3) {
             velocityHistory.shift();
         }
         
-        // Use average velocity for smoother transitions
         const avgVelocity = velocityHistory.reduce((sum, v) => sum + v, 0) / velocityHistory.length;
         
-        // Map velocity to stroke width - only gets thinner, never thicker
-        // Slow = base width (from slider), fast = thinner
-        const minWidth = drawingConfig.strokeWidth * 0.4;  // Thinnest (fast writing)
-        const maxWidth = drawingConfig.strokeWidth;         // Thickest = base width (slow writing)
+        const minWidth = drawingConfig.strokeWidth * 0.4;
+        const maxWidth = drawingConfig.strokeWidth;
         
-        // Normalize velocity with higher threshold for more dramatic effect
-        // Typical fast writing: 2-8 pixels per ms
         const normalizedVelocity = Math.min(avgVelocity / 5, 1);
         
-        // Direct relationship with smooth curve: high velocity = thin line
         const targetWidth = maxWidth - (Math.pow(normalizedVelocity, 0.7) * (maxWidth - minWidth));
         
-        // Interpolate between last width and target width for ultra-smooth transitions
-        const smoothingFactor = 0.3; // Lower = smoother but more lag, higher = more responsive
+        const smoothingFactor = 0.3;
         const width = lastWidth + (targetWidth - lastWidth) * smoothingFactor;
         
         lastWidth = width;
@@ -314,16 +293,15 @@ document.addEventListener('DOMContentLoaded', () => {
         lastY = y;
         lastTime = Date.now();
         lastWidth = drawingConfig.strokeWidth;
-        velocityHistory = []; // Reset velocity history on new stroke
+        velocityHistory = [];
         
         ctx.beginPath();
         ctx.moveTo(x, y);
         
-        // Draw a dot when clicking (not dragging)
         ctx.lineWidth = drawingConfig.strokeWidth;
         ctx.lineCap = 'round';
         ctx.strokeStyle = body.classList.contains('dark-mode') ? 'white' : 'black';
-        ctx.lineTo(x + 0.1, y + 0.1); // Tiny line to create a dot
+        ctx.lineTo(x + 0.1, y + 0.1);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -467,9 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- START: NEW CODE BLOCK ---
-    // The following functions implement the live status dots and improved settings logic.
-
     function applyBackendFromRadios() {
         const selected = document.querySelector('input[name="backend"]:checked')?.value;
         if (selected && BACKEND_URLS[selected]) {
@@ -481,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateAlgorithmConfigAvailability(backend) {
         const isPythonAnywhere = backend === 'pythonanywhere';
         
-        // Disable/enable algorithm configuration cog buttons
         if (qknnSettingsCog) {
             qknnSettingsCog.disabled = isPythonAnywhere;
             qknnSettingsCog.style.opacity = isPythonAnywhere ? '0.5' : '1';
@@ -496,13 +470,11 @@ document.addEventListener('DOMContentLoaded', () => {
             knnSettingsCog.title = isPythonAnywhere ? 'Configuration locked for PythonAnywhere (250 training, 16 PCA)' : 'Configure kNN settings';
         }
         
-        // Close any open configuration menus when switching to PythonAnywhere
         if (isPythonAnywhere) {
             closeQknnPopover();
             closeKnnPopover();
         }
         
-        // Reset to default PythonAnywhere values if switching to it
         if (isPythonAnywhere) {
             algorithmConfigs.qknn_sim.training_size = 250;
             algorithmConfigs.qknn_sim.pca_components = 16;
@@ -521,9 +493,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), ms);
         try {
-            // mode: 'no-cors' is a trick to check for reachability without needing a full CORS-compliant response.
             await fetch(url.replace('/classify', '/status'), { method: 'GET', mode: 'no-cors', signal: ctrl.signal });
-            return true; // If we got any response (no network error), consider it reachable.
+            return true;
         } catch {
             return false;
         } finally {
@@ -532,7 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateBackendStatusDots() {
-        // --- Hugging Face Check ---
         const hfRadio = document.querySelector('input[name="backend"][value="huggingface"]');
         const hfDot = document.getElementById('hfStatus');
         if (hfRadio && hfDot) {
@@ -543,7 +513,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hfRadio.disabled = !isOnline;
         }
 
-        // --- Localhost Check ---
         const localRadio = document.querySelector('input[name="backend"][value="localhost"]');
         const localDot = document.getElementById('localStatus');
         if (localRadio && localDot) {
@@ -554,7 +523,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localRadio.disabled = !isOnline;
         }
 
-        // --- PythonAnywhere Check ---
         const paRadio = document.querySelector('input[name="backend"][value="pythonanywhere"]');
         const paDot = document.getElementById('paStatus');
         if (paRadio && paDot) {
@@ -565,10 +533,8 @@ document.addEventListener('DOMContentLoaded', () => {
             paRadio.disabled = !isOnline;
         }
         
-        // After updating statuses, check if the main button should be disabled
         updateClassifyButtonState();
         
-        // Update algorithm config availability based on selected backend
         const selectedBackend = document.querySelector('input[name="backend"]:checked')?.value;
         if (selectedBackend) {
             updateAlgorithmConfigAvailability(selectedBackend);
@@ -577,24 +543,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateClassifyButtonState() {
         const selectedRadio = document.querySelector('input[name="backend"]:checked');
-        // Disable the classify button if the currently selected backend radio is disabled
         if (selectedRadio) {
             classifyBtn.disabled = selectedRadio.disabled;
         }
     }
 
-    /**
-     * A flexible preprocessing function that applies different steps based on options.
-     * @param {object} options - Configuration object for preprocessing steps.
-     * @returns {HTMLCanvasElement} A new 28x28 canvas with the processed image.
-     */
     function preprocessCanvas(options) {
         let currentCanvas = document.createElement('canvas');
         currentCanvas.width = 280;
         currentCanvas.height = 280;
         currentCanvas.getContext('2d').drawImage(canvas, 0, 0);
 
-        // Step 1: Center of Mass (Conditional)
         if (options.useCoM) {
             const sourceCtx = currentCanvas.getContext('2d', { willReadFrequently: true });
             const imageData = sourceCtx.getImageData(0, 0, currentCanvas.width, currentCanvas.height);
@@ -623,21 +582,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Create final 28x28 canvas
         const finalCanvas = document.createElement('canvas');
         finalCanvas.width = 28;
         finalCanvas.height = 28;
         const finalCtx = finalCanvas.getContext('2d');
         finalCtx.drawImage(currentCanvas, 0, 0, 28, 28);
 
-        // Step 2: Gaussian Blur (Conditional)
         if (options.useBlur) {
             finalCtx.filter = `blur(${options.blurAmount}px)`;
-            // Drawing twice can enhance the effect after a blur
             finalCtx.drawImage(finalCanvas, 0, 0);
         }
         
-        // Step 3: Normalize Intensity (Conditional)
         if (options.useThinning) {
             const thinningValue = parseFloat(options.thinningIterations) || 0;
             const fullIterations = Math.floor(thinningValue);
@@ -652,16 +607,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let x = 0; x < 28; x++) {
                         const idx = (y * 28 + x) * 4;
                         
-                        if (data[idx + 3] > 0) { // If pixel is not transparent
+                        if (data[idx + 3] > 0) {
                             let isBoundary = false;
-                            // Check 3x3 neighborhood
                             for (let ny = -1; ny <= 1; ny++) {
                                 for (let nx = -1; nx <= 1; nx++) {
                                     if (nx === 0 && ny === 0) continue;
                                     const newX = x + nx;
                                     const newY = y + ny;
                                     
-                                    // If a neighbor is off-canvas or is transparent, this pixel is on a boundary
                                     if (newX < 0 || newX >= 28 || newY < 0 || newY >= 28 || data[((newY * 28 + newX) * 4) + 3] === 0) {
                                         isBoundary = true;
                                         break;
@@ -670,22 +623,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (isBoundary) break;
                             }
                             
-                            // If it's not a boundary pixel, it's an interior pixel. Keep it.
                             if (!isBoundary) {
                                 erodedData[idx] = data[idx];
                                 erodedData[idx + 1] = data[idx + 1];
                                 erodedData[idx + 2] = data[idx + 2];
                                 erodedData[idx + 3] = data[idx + 3];
                             } else {
-                                // If it IS a boundary pixel, decide whether to erode it based on probability
                                 if (Math.random() >= probability) {
-                                    // Keep the pixel (do not erode)
+                                    
                                     erodedData[idx] = data[idx];
                                     erodedData[idx + 1] = data[idx + 1];
                                     erodedData[idx + 2] = data[idx + 2];
                                     erodedData[idx + 3] = data[idx + 3];
                                 }
-                                // Otherwise, do nothing, effectively eroding it (leaving it transparent)
                             }
                         }
                     }
@@ -694,12 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 finalCtx.putImageData(imageData, 0, 0);
             };
 
-            // Apply full iterations
             for (let i = 0; i < fullIterations; i++) {
-                applyErosion(1.0); // 100% probability
+                applyErosion(1.0);
             }
 
-            // Apply partial iteration
             if (partialIterationProb > 0) {
                 applyErosion(partialIterationProb);
             }
@@ -708,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return finalCanvas;
     }
 
-    // --- Floating Preprocess Popover (smart positioning) ---
+    // --- Floating Preprocess Popover ---
     function positionPreprocessPopover() {
         if (!preprocessSubMenu || !preprocessSubMenu.classList.contains('active')) return;
 
@@ -716,65 +664,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!anchor) return;
 
         const rect = anchor.getBoundingClientRect();
-        const margin = 10; // viewport margin
-        const gap = 8;     // space between anchor and popover
+        const margin = 10; 
+        const gap = 8;     
         const desiredWidth = Math.min(320, window.innerWidth - margin * 2);
 
-        // Main settings cog position (bottom of screen reference point)
+        // Main settings cog position 
         const settingsCogRect = settingsCog.getBoundingClientRect();
-        const maxBottom = settingsCogRect.top - gap; // Just above the main cog
+        const maxBottom = settingsCogRect.top - gap; 
 
-        // Prepare for measurement
         preprocessSubMenu.style.width = desiredWidth + 'px';
-        preprocessSubMenu.style.maxHeight = 'none'; // Remove max-height temporarily to get natural height
+        preprocessSubMenu.style.maxHeight = 'none';
         preprocessSubMenu.style.visibility = 'hidden';
         preprocessSubMenu.style.display = 'block';
 
-        const popHeight = preprocessSubMenu.scrollHeight; // Natural height
+        const popHeight = preprocessSubMenu.scrollHeight;
         const availableBelow = maxBottom - rect.top;
         const availableAbove = rect.bottom - margin;
 
         let top, maxHeight;
         
-        // Check if we can fit below the anchor
         if (availableBelow >= popHeight) {
-            // Open downward - enough space
             top = rect.top;
             maxHeight = availableBelow;
         } else if (availableAbove >= popHeight) {
-            // Open upward - enough space above
             top = rect.bottom - popHeight;
             maxHeight = availableAbove;
         } else {
-            // Not enough space in either direction, choose the larger space
             if (availableBelow >= availableAbove) {
-                // Open downward with scroll
                 top = rect.top;
                 maxHeight = availableBelow;
             } else {
-                // Open upward with scroll
                 top = margin;
                 maxHeight = availableAbove;
             }
         }
 
-        // Horizontal placement
         const availableRight = window.innerWidth - rect.right;
         const availableLeft = rect.left;
 
         let left;
         if (availableRight >= desiredWidth + gap) {
-            // open to the right
             left = rect.right + gap;
         } else if (availableLeft >= desiredWidth + gap) {
-            // open to the left
             left = rect.left - desiredWidth - gap;
         } else {
-            // center-ish fallback within viewport
             left = Math.max(margin, Math.min(window.innerWidth - margin - desiredWidth, rect.left));
         }
 
-        // Apply final position
         preprocessSubMenu.style.left = Math.round(left) + 'px';
         preprocessSubMenu.style.top = Math.round(top) + 'px';
         preprocessSubMenu.style.maxHeight = Math.round(maxHeight) + 'px';
@@ -798,13 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closePreprocessPopover() {
         preprocessSubMenu.classList.remove('active');
-        // optional: clear inline position to avoid stale placement
-        // preprocessSubMenu.style.left = '';
-        // preprocessSubMenu.style.top = '';
-        // preprocessSubMenu.style.display = '';
     }
 
-    // --- Algorithm Configuration Popovers ---
     function positionAlgorithmPopover(popover, anchor) {
         if (!popover || !popover.classList.contains('active')) return;
         if (!anchor) return;
@@ -814,45 +745,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const gap = 8;
         const desiredWidth = Math.min(320, window.innerWidth - margin * 2);
 
-        // Main settings cog position (bottom of screen reference point)
         const settingsCogRect = settingsCog.getBoundingClientRect();
-        const maxBottom = settingsCogRect.top - gap; // Just above the main cog
+        const maxBottom = settingsCogRect.top - gap;
 
-        // Prepare for measurement
         popover.style.width = desiredWidth + 'px';
-        popover.style.maxHeight = 'none'; // Remove max-height temporarily to get natural height
+        popover.style.maxHeight = 'none';
         popover.style.visibility = 'hidden';
         popover.style.display = 'block';
 
-        const popHeight = popover.scrollHeight; // Natural height
+        const popHeight = popover.scrollHeight;
         const availableBelow = maxBottom - rect.top;
         const availableAbove = rect.bottom - margin;
 
         let top, maxHeight;
         
-        // Check if we can fit below the anchor
         if (availableBelow >= popHeight) {
-            // Open downward - enough space
             top = rect.top;
             maxHeight = availableBelow;
         } else if (availableAbove >= popHeight) {
-            // Open upward - enough space above
             top = rect.bottom - popHeight;
             maxHeight = availableAbove;
         } else {
-            // Not enough space in either direction, choose the larger space
             if (availableBelow >= availableAbove) {
-                // Open downward with scroll
                 top = rect.top;
                 maxHeight = availableBelow;
             } else {
-                // Open upward with scroll
                 top = margin;
                 maxHeight = availableAbove;
             }
         }
 
-        // Horizontal placement
         const availableRight = window.innerWidth - rect.right;
         const availableLeft = rect.left;
 
@@ -865,13 +787,11 @@ document.addEventListener('DOMContentLoaded', () => {
             left = Math.max(margin, rect.left - desiredWidth - gap);
         }
 
-        // Apply final position
         popover.style.left = Math.round(left) + 'px';
         popover.style.top = Math.round(top) + 'px';
         popover.style.maxHeight = Math.round(maxHeight) + 'px';
         popover.style.visibility = '';
     }    function openQknnPopover() {
-        // Don't open if disabled (PythonAnywhere mode)
         if (qknnSettingsCog.disabled) return;
         
         closePreprocessPopover();
@@ -887,7 +807,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openKnnPopover() {
-        // Don't open if disabled (PythonAnywhere mode)
         if (knnSettingsCog.disabled) return;
         
         closePreprocessPopover();
@@ -902,7 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
         knnSubMenu.classList.remove('active');
     }
 
-    // Update algorithm configs from sliders
     function updateQknnConfig() {
         const trainingSize = parseInt(qknnTrainingSize.value);
         const pcaPower = parseInt(qknnPcaComponents.value);
@@ -921,7 +839,6 @@ document.addEventListener('DOMContentLoaded', () => {
         algorithmConfigs.qknn_sim.k = k;
         algorithmConfigs.qknn_sim.shots = shots;
 
-        // Sync K value to kNN
         if (knnK.value !== k.toString()) {
             knnK.value = k;
             knnKValue.textContent = k;
@@ -932,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateKnnConfig() {
         const trainingSize = parseInt(knnTrainingSize.value);
         const pcaSliderValue = parseInt(knnPcaComponents.value);
-        const pcaComponents = Math.pow(2, pcaSliderValue); // Convert slider to power of 2
+        const pcaComponents = Math.pow(2, pcaSliderValue); 
         const k = parseInt(knnK.value);
 
         knnTrainingSizeValue.textContent = trainingSize;
@@ -943,7 +860,6 @@ document.addEventListener('DOMContentLoaded', () => {
         algorithmConfigs.knn_classical.pca_components = pcaComponents;
         algorithmConfigs.knn_classical.k = k;
 
-        // Sync K value to QkNN
         if (qknnK.value !== k.toString()) {
             qknnK.value = k;
             qknnKValue.textContent = k;
@@ -951,9 +867,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Training size editable value handlers
     function setupEditableTrainingSize(valueElement, sliderElement, configUpdateFn) {
-        // Enable editing on hover
+
         valueElement.addEventListener('mouseenter', () => {
             valueElement.setAttribute('contenteditable', 'true');
         });
@@ -964,31 +879,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Handle blur (user clicks away or tabs out)
+
         valueElement.addEventListener('blur', () => {
             valueElement.setAttribute('contenteditable', 'false');
             let newValue = parseInt(valueElement.textContent);
             
-            // Validate and constrain
             if (isNaN(newValue) || newValue < 250) newValue = 250;
             if (newValue > 60000) newValue = 60000;
             
-            // Round to nearest 250
             newValue = Math.round(newValue / 250) * 250;
             
-            // Update slider and display
             sliderElement.value = newValue;
             valueElement.textContent = newValue;
             configUpdateFn();
         });
 
-        // Handle Enter key to confirm
         valueElement.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 valueElement.blur();
             }
-            // Only allow numbers
             if (e.key.length === 1 && !/[0-9]/.test(e.key)) {
                 e.preventDefault();
             }
@@ -997,7 +907,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    // --- Debug View Functions ---
     let lastProcessedCanvas = null;
 
     async function updateDebugView() {
@@ -1005,7 +914,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         debugArea.style.display = 'block';
         
-        // Update user's processed drawing with dark background
         let processedCanvas;
         if (preprocessToggle.checked) {
             const options = {
@@ -1023,16 +931,13 @@ document.addEventListener('DOMContentLoaded', () => {
             processedCanvas.getContext('2d').drawImage(canvas, 0, 0, 28, 28);
         }
         
-        // Store for later use
         lastProcessedCanvas = processedCanvas;
         
-        // Draw with black background to match MNIST
         const userCtx = debugCanvasUser.getContext('2d');
         userCtx.fillStyle = 'black';
         userCtx.fillRect(0, 0, 140, 140);
         userCtx.drawImage(processedCanvas, 0, 0, 140, 140);
         
-        // Fetch and display MNIST sample
         await fetchMnistSample();
     }
 
@@ -1040,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterDigit = mnistDigitFilter.value;
         let url = currentBackendUrl.replace('/classify', '/get_random_mnist_image');
         
-        // If user specified a digit filter, add it as query parameter
         if (filterDigit !== '' && filterDigit >= 0 && filterDigit <= 9) {
             url += `?digit=${filterDigit}`;
         }
@@ -1049,10 +953,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url);
             const data = await response.json();
             
-            // Update label
             mnistLabel.textContent = data.label;
             
-            // Draw MNIST image with black background
             const mnistCtx = debugCanvasMnist.getContext('2d');
             mnistCtx.fillStyle = 'black';
             mnistCtx.fillRect(0, 0, 140, 140);
@@ -1083,8 +985,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSelectedAlgorithms() {
         const checkedBoxes = document.querySelectorAll('input[name="algorithm"]:checked');
-        // Return an array of the values, e.g., ["qknn_sim", "knn_classical"]
-        // If none are checked, default to an empty array.
         return Array.from(checkedBoxes).map(cb => cb.value);
     }
 
@@ -1119,7 +1019,6 @@ document.addEventListener('DOMContentLoaded', () => {
         resetResultDisplay();
         lastResultState = null;
         
-        // Update debug view if enabled
         if (debugViewToggle.checked) {
             await updateDebugView();
         }
@@ -1204,21 +1103,19 @@ document.addEventListener('DOMContentLoaded', () => {
             updateClassifyButtonState();
         }
     }
-
-    // --- END: NEW CODE BLOCK ---
     
     // --- 4. Initialization and Event Listeners ---
     
     function init() {
-        // Load saved theme
+        
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) setTheme(savedTheme === 'dark');
 
-        // Load saved settings
+        
         loadHistory();
         loadSettings();
         applyBackendFromRadios();
-        updateBackendStatusDots(); // Check status on page load
+        updateBackendStatusDots(); 
 
         // Dark Mode Toggle
         darkModeToggle.addEventListener('change', () => {
@@ -1264,7 +1161,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         historyToggle.addEventListener('change', () => {
             historyContainer.classList.toggle('active', historyToggle.checked);
-            // If the user is enabling the history view, render the table.
             if (historyToggle.checked) {
                 renderHistoryTable();
             }
@@ -1272,23 +1168,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearHistoryBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to clear the entire history? This cannot be undone.')) {
-                historyLog = []; // Empty the array
-                saveHistory(); // Update localStorage
-                renderHistoryTable(); // Redraw the empty table
+                historyLog = []; 
+                saveHistory(); 
+                renderHistoryTable();
             }
         });
 
         historyTableBody.addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-row-btn')) {
                 const entryId = parseInt(e.target.dataset.id);
-                // Filter the log to keep every entry EXCEPT the one with the matching ID
                 historyLog = historyLog.filter(entry => entry.id !== entryId);
                 saveHistory();
                 renderHistoryTable();
             }
         });
         
-        // Global Click & Key Listeners
         document.addEventListener('click', (e) => {
             if (!navbar.contains(e.target)) {
                 navLinks.classList.remove('active');
@@ -1300,7 +1194,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pencilMenu && !pencilMenu.contains(e.target) && !pencilCog.contains(e.target)) {
                 pencilMenu.classList.remove('active');
             }
-            // Close preprocess submenu if clicking outside of it and the small cog
             if (preprocessSubMenu.classList.contains('active')) {
                 const clickedInsidePre = preprocessSubMenu.contains(e.target);
                 const clickedAnchor = preprocessSettingsCog.contains(e.target);
@@ -1308,7 +1201,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     closePreprocessPopover();
                 }
             }
-            // Close QkNN submenu if clicking outside
             if (qknnSubMenu.classList.contains('active')) {
                 const clickedInsideQknn = qknnSubMenu.contains(e.target);
                 const clickedAnchorQknn = qknnSettingsCog.contains(e.target);
@@ -1316,7 +1208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeQknnPopover();
                 }
             }
-            // Close kNN submenu if clicking outside
             if (knnSubMenu.classList.contains('active')) {
                 const clickedInsideKnn = knnSubMenu.contains(e.target);
                 const clickedAnchorKnn = knnSettingsCog.contains(e.target);
@@ -1336,18 +1227,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         historyTableBody.addEventListener('change', (e) => {
-            // Check if the event was triggered by a correct-label-input field
             if (e.target.classList.contains('correct-label-input')) {
                 const entryId = parseInt(e.target.dataset.id);
                 const newLabel = e.target.value;
 
-                // Find the corresponding entry in our log
                 const entryToUpdate = historyLog.find(entry => entry.id === entryId);
                 
                 if (entryToUpdate) {
                     entryToUpdate.correctLabel = newLabel;
-                    saveHistory(); // Persist the change
-                    updateAccuracyTally(); // Recalculate and display the new scores
+                    saveHistory();
+                    updateAccuracyTally();
                 }
             }
         });
@@ -1368,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Preprocess submenu: floating panel toggle (like settings-menu)
+        // Preprocess submenu
         preprocessSettingsCog.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1379,10 +1268,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Prevent clicks inside the panel from closing it
         preprocessSubMenu.addEventListener('click', (e) => e.stopPropagation());
 
-        // QkNN submenu
         qknnSettingsCog.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1394,7 +1281,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         qknnSubMenu.addEventListener('click', (e) => e.stopPropagation());
 
-        // kNN submenu
         knnSettingsCog.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1406,7 +1292,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         knnSubMenu.addEventListener('click', (e) => e.stopPropagation());
 
-        // Algorithm config sliders
         qknnTrainingSize.addEventListener('input', updateQknnConfig);
         qknnPcaComponents.addEventListener('input', updateQknnConfig);
         qknnK.addEventListener('input', updateQknnConfig);
@@ -1416,15 +1301,12 @@ document.addEventListener('DOMContentLoaded', () => {
         knnPcaComponents.addEventListener('input', updateKnnConfig);
         knnK.addEventListener('input', updateKnnConfig);
 
-        // Initialize config displays
         updateQknnConfig();
         updateKnnConfig();
 
-        // Setup editable training size values
         setupEditableTrainingSize(qknnTrainingSizeValue, qknnTrainingSize, updateQknnConfig);
         setupEditableTrainingSize(knnTrainingSizeValue, knnTrainingSize, updateKnnConfig);
 
-        // Pencil configuration listeners
         strokeWidthSlider.addEventListener('input', () => {
             drawingConfig.strokeWidth = parseInt(strokeWidthSlider.value);
             strokeWidthValue.textContent = strokeWidthSlider.value;
@@ -1450,10 +1332,8 @@ document.addEventListener('DOMContentLoaded', () => {
         blurToggle.addEventListener('change', updateSliderStates);
         thinningToggle.addEventListener('change', updateSliderStates);
 
-        // Initial state
         updateSliderStates();
 
-        // Canvas Drawing Events
         canvas.addEventListener('mousedown', startPosition);
         canvas.addEventListener('mouseup', endPosition);
         canvas.addEventListener('mouseleave', endPosition);
