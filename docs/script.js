@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'default'
         },
         'knn_classical': {
-            training_size: 250,
-            pca_components: 16,
+            training_size: 25000,
+            pca_components: 32,
             k: 5,
             method: 'default'
         }
@@ -549,9 +549,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function preprocessCanvas(options) {
-        let currentCanvas = document.createElement('canvas');
-        currentCanvas.width = 280;
-        currentCanvas.height = 280;
+    const baseWidth = canvas.width;
+    const baseHeight = canvas.height;
+
+    let currentCanvas = document.createElement('canvas');
+    currentCanvas.width = baseWidth;
+    currentCanvas.height = baseHeight;
         currentCanvas.getContext('2d').drawImage(canvas, 0, 0);
 
         if (options.useCoM) {
@@ -575,8 +578,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shiftY = currentCanvas.height / 2 - comY;
                 
                 const shiftedCtx = document.createElement('canvas').getContext('2d');
-                shiftedCtx.canvas.width = 280;
-                shiftedCtx.canvas.height = 280;
+                shiftedCtx.canvas.width = baseWidth;
+                shiftedCtx.canvas.height = baseHeight;
                 shiftedCtx.drawImage(currentCanvas, shiftX, shiftY);
                 currentCanvas = shiftedCtx.canvas;
             }
@@ -656,6 +659,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return finalCanvas;
     }
 
+    function syncDrawingCanvasSize() {
+        const rect = canvas.getBoundingClientRect();
+        const newSize = Math.round(rect.width);
+
+        if (!newSize || newSize === canvas.width) {
+            return;
+        }
+
+        const snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext('2d').drawImage(canvas, 0, 0);
+
+        canvas.width = newSize;
+        canvas.height = newSize;
+
+        const scale = newSize / snapshot.width;
+        ctx.save();
+        ctx.scale(scale, scale);
+        ctx.drawImage(snapshot, 0, 0);
+        ctx.restore();
+    }
+
     // --- Floating Preprocess Popover ---
     function positionPreprocessPopover() {
         if (!preprocessSubMenu || !preprocessSubMenu.classList.contains('active')) return;
@@ -672,6 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const settingsCogRect = settingsCog.getBoundingClientRect();
         const maxBottom = settingsCogRect.top - gap; 
 
+        preprocessSubMenu.style.height = 'auto';
+        preprocessSubMenu.style.bottom = 'auto';
+        preprocessSubMenu.style.right = 'auto';
         preprocessSubMenu.style.width = desiredWidth + 'px';
         preprocessSubMenu.style.maxHeight = 'none';
         preprocessSubMenu.style.visibility = 'hidden';
@@ -713,7 +742,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         preprocessSubMenu.style.left = Math.round(left) + 'px';
         preprocessSubMenu.style.top = Math.round(top) + 'px';
-        preprocessSubMenu.style.maxHeight = Math.round(maxHeight) + 'px';
+        const safeMaxHeight = Math.max(0, maxHeight);
+        const clampedHeight = safeMaxHeight === 0 ? popHeight : Math.min(popHeight, safeMaxHeight);
+        preprocessSubMenu.style.maxHeight = safeMaxHeight === 0 ? '' : Math.round(safeMaxHeight) + 'px';
+        preprocessSubMenu.style.height = Math.round(clampedHeight) + 'px';
+        preprocessSubMenu.style.overflowY = popHeight > safeMaxHeight && safeMaxHeight !== 0 ? 'auto' : 'hidden';
         preprocessSubMenu.style.visibility = '';
     }
 
@@ -734,6 +767,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closePreprocessPopover() {
         preprocessSubMenu.classList.remove('active');
+        preprocessSubMenu.style.removeProperty('height');
+        preprocessSubMenu.style.removeProperty('maxHeight');
+        preprocessSubMenu.style.removeProperty('overflowY');
+        preprocessSubMenu.style.removeProperty('top');
+        preprocessSubMenu.style.removeProperty('left');
+        preprocessSubMenu.style.removeProperty('bottom');
+        preprocessSubMenu.style.removeProperty('right');
     }
 
     function positionAlgorithmPopover(popover, anchor) {
@@ -748,6 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const settingsCogRect = settingsCog.getBoundingClientRect();
         const maxBottom = settingsCogRect.top - gap;
 
+        popover.style.height = 'auto';
+        popover.style.bottom = 'auto';
+        popover.style.right = 'auto';
         popover.style.width = desiredWidth + 'px';
         popover.style.maxHeight = 'none';
         popover.style.visibility = 'hidden';
@@ -789,9 +832,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         popover.style.left = Math.round(left) + 'px';
         popover.style.top = Math.round(top) + 'px';
-        popover.style.maxHeight = Math.round(maxHeight) + 'px';
+        const safeMaxHeight = Math.max(0, maxHeight);
+        const clampedHeight = safeMaxHeight === 0 ? popHeight : Math.min(popHeight, safeMaxHeight);
+        popover.style.maxHeight = safeMaxHeight === 0 ? '' : Math.round(safeMaxHeight) + 'px';
+        popover.style.height = Math.round(clampedHeight) + 'px';
+        popover.style.overflowY = popHeight > safeMaxHeight && safeMaxHeight !== 0 ? 'auto' : 'hidden';
         popover.style.visibility = '';
-    }    function openQknnPopover() {
+    }
+
+    function openQknnPopover() {
         if (qknnSettingsCog.disabled) return;
         
         closePreprocessPopover();
@@ -804,6 +853,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeQknnPopover() {
         qknnSubMenu.classList.remove('active');
+        qknnSubMenu.style.removeProperty('height');
+        qknnSubMenu.style.removeProperty('maxHeight');
+        qknnSubMenu.style.removeProperty('overflowY');
+        qknnSubMenu.style.removeProperty('top');
+        qknnSubMenu.style.removeProperty('left');
+        qknnSubMenu.style.removeProperty('bottom');
+        qknnSubMenu.style.removeProperty('right');
     }
 
     function openKnnPopover() {
@@ -819,6 +875,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeKnnPopover() {
         knnSubMenu.classList.remove('active');
+        knnSubMenu.style.removeProperty('height');
+        knnSubMenu.style.removeProperty('maxHeight');
+        knnSubMenu.style.removeProperty('overflowY');
+        knnSubMenu.style.removeProperty('top');
+        knnSubMenu.style.removeProperty('left');
+        knnSubMenu.style.removeProperty('bottom');
+        knnSubMenu.style.removeProperty('right');
     }
 
     function updateQknnConfig() {
@@ -934,9 +997,13 @@ document.addEventListener('DOMContentLoaded', () => {
         lastProcessedCanvas = processedCanvas;
         
         const userCtx = debugCanvasUser.getContext('2d');
+        const targetWidth = debugCanvasUser.width;
+        const targetHeight = debugCanvasUser.height;
+        userCtx.clearRect(0, 0, targetWidth, targetHeight);
         userCtx.fillStyle = 'black';
-        userCtx.fillRect(0, 0, 140, 140);
-        userCtx.drawImage(processedCanvas, 0, 0, 140, 140);
+        userCtx.fillRect(0, 0, targetWidth, targetHeight);
+        userCtx.imageSmoothingEnabled = false;
+        userCtx.drawImage(processedCanvas, 0, 0, targetWidth, targetHeight);
         
         await fetchMnistSample();
     }
@@ -956,8 +1023,12 @@ document.addEventListener('DOMContentLoaded', () => {
             mnistLabel.textContent = data.label;
             
             const mnistCtx = debugCanvasMnist.getContext('2d');
+            const targetWidth = debugCanvasMnist.width;
+            const targetHeight = debugCanvasMnist.height;
+            mnistCtx.clearRect(0, 0, targetWidth, targetHeight);
             mnistCtx.fillStyle = 'black';
-            mnistCtx.fillRect(0, 0, 140, 140);
+            mnistCtx.fillRect(0, 0, targetWidth, targetHeight);
+            mnistCtx.imageSmoothingEnabled = false;
             
             const imageData = mnistCtx.createImageData(28, 28);
             for (let i = 0; i < data.pixels.length; i++) {
@@ -974,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.putImageData(imageData, 0, 0);
             
-            mnistCtx.drawImage(tempCanvas, 0, 0, 140, 140);
+            mnistCtx.drawImage(tempCanvas, 0, 0, targetWidth, targetHeight);
         } catch (error) {
             console.error('Error fetching MNIST sample:', error);
             mnistLabel.textContent = 'Error';
@@ -1112,10 +1183,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedTheme) setTheme(savedTheme === 'dark');
 
         
-        loadHistory();
-        loadSettings();
-        applyBackendFromRadios();
-        updateBackendStatusDots(); 
+    loadHistory();
+    loadSettings();
+    applyBackendFromRadios();
+    updateBackendStatusDots(); 
+
+    syncDrawingCanvasSize();
 
         // Dark Mode Toggle
         darkModeToggle.addEventListener('change', () => {
@@ -1241,6 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        let resizeTimer;
         window.addEventListener('resize', () => {
             if (window.innerWidth > MOBILE_BREAKPOINT) {
                 navLinks.classList.remove('active');
@@ -1255,6 +1329,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (knnSubMenu.classList.contains('active')) {
                 positionAlgorithmPopover(knnSubMenu, knnSettingsCog);
             }
+
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                syncDrawingCanvasSize();
+            }, 150);
         });
 
         // Preprocess submenu

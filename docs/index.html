@@ -86,14 +86,14 @@
 
     <div id="debug-area" style="display: none; margin-top: 30px; text-align: center;">
         <h3>Debug View</h3>
-        <div style="display: flex; justify-content: center; gap: 40px; align-items: flex-start;">
-            <div>
+        <div class="debug-view-container">
+            <div class="debug-canvas-wrapper">
                 <p style="font-weight: bold; margin-bottom: 10px;">Your Processed Drawing</p>
-                <canvas id="debug-canvas-user" width="140" height="140" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
+                <canvas id="debug-canvas-user" width="280" height="280" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
             </div>
-            <div>
+            <div class="debug-canvas-wrapper">
                 <p style="font-weight: bold; margin-bottom: 10px;">MNIST Sample (Label: <span id="mnist-label">-</span>)</p>
-                <canvas id="debug-canvas-mnist" width="140" height="140" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
+                <canvas id="debug-canvas-mnist" width="280" height="280" style="border: 2px solid #1f77b4; border-radius: 8px; image-rendering: pixelated; background-color: black;"></canvas>
                 <div style="margin-top: 15px;">
                     <label for="mnist-digit-filter" style="margin-right: 8px; font-size: 14px;">Filter by digit (0-9):</label>
                     <input type="number" id="mnist-digit-filter" min="0" max="9" placeholder="Any" style="width: 60px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center;">
@@ -238,7 +238,7 @@
         <div class="setting-option">
             <label for="thinningToggle">Morphological Thinning</label>
             <label class="switch">
-                <input type="checkbox" id="thinningToggle" checked>
+                <input type="checkbox" id="thinningToggle">
                 <span class="slider round"></span>
             </label>
         </div>
@@ -292,18 +292,18 @@
         
         <div class="setting-option">
             <label for="knnTrainingSize">Training Size</label>
-            <span id="knnTrainingSizeValue" class="editable-value" contenteditable="false">250</span>
+            <span id="knnTrainingSizeValue" class="editable-value" contenteditable="false">25000</span>
         </div>
         <div class="setting-option slider-option">
-            <input type="range" id="knnTrainingSize" min="250" max="60000" step="250" value="250">
+            <input type="range" id="knnTrainingSize" min="250" max="60000" step="250" value="25000">
         </div>
         
         <div class="setting-option">
             <label for="knnPcaComponents">PCA Components</label>
-            <span id="knnPcaComponentsValue">16</span>
+            <span id="knnPcaComponentsValue">32</span>
         </div>
         <div class="setting-option slider-option">
-            <input type="range" id="knnPcaComponents" min="2" max="9" step="1" value="4">
+            <input type="range" id="knnPcaComponents" min="2" max="9" step="1" value="5">
         </div>
         
         <div class="setting-option">
