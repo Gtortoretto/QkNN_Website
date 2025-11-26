@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. Constants and Global State ---
     const BACKEND_URLS = {
-        huggingface: 'https://gtortoretto-qknn-backend.hf.space/classify',
+        huggingface: 'https://gtortoretto-qknn-backend-c3fbdea.hf.space/classify',
         localhost: 'http://127.0.0.1:5000/classify',
         pythonanywhere: 'https://gtortoretto.pythonanywhere.com/classify'
     };
